@@ -53,3 +53,23 @@ footer {
     padding: 10px;
     color: #555;
 }
+.progress-container {
+    width: 100%;
+    background: #e6e6e6;
+    border-radius: 4px;
+    margin-top: 1rem;
+    height: 20px;
+    overflow: hidden;
+    display: none;
+}
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: rgb(0, 123, 255);
+    transition: width 0.3s;
+}
+#progress-text {
+    margin-top: 8px;
+    font-family: monospace;
+    color: #333;
+}
