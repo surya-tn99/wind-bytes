@@ -1,4 +1,5 @@
 *.mp4
 *.core
+*.csv
 __pycache__/
 core/
