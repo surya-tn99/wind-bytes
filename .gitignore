@@ -1,2 +1,4 @@
-
+*.mp4
 *.core
+__pycache__/
+core/
