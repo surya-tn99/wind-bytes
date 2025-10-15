@@ -35,7 +35,7 @@ app.mount("/style", StaticFiles(directory="website/style"), name="style")
 
 @app.get("/", response_class=HTMLResponse)
 async def mainPage(request:Request):
-    return templates.TemplateResponse("index.html",{"request":request})
+    return templates.TemplateResponse("uploadVideo.html",{"request":request})
 
 @app.post("/upload")
 async def storeVideo(videoFile : UploadFile = File(...)):
