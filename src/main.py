@@ -31,13 +31,19 @@ if not os.path.exists(csv_file_path):
 
 
 templates = Jinja2Templates(directory = "website")
-app.mount("/style", StaticFiles(directory="website/style"), name="style")
+app.mount("/u/style", StaticFiles(directory="website/style"), name="style")
 
 @app.get("/", response_class=HTMLResponse)
-async def mainPage(request:Request):
+async def indexPage(request:Request):
+    return templates.TemplateResponse("index.html",{"request":request})
+
+@app.get("/u/upload", response_class=HTMLResponse)
+async def uploadVideoPage(request:Request):
     return templates.TemplateResponse("uploadVideo.html",{"request":request})
 
-@app.post("/upload")
+# route : /u/watch <- user can view the videos
+
+@app.post("/file/upload")
 async def storeVideo(videoFile : UploadFile = File(...)):
 
     def prepare_file_id():
@@ -75,4 +81,4 @@ async def storeVideo(videoFile : UploadFile = File(...)):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=2025)
+    uvicorn.run("main:app", port=2025 , reload=True)
