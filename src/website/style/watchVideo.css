@@ -7,8 +7,12 @@ body{
 }
 h1{
     font-size: 2rem;
-    color: #333; 
+    color: #333 !important;
     font-style: italic;
+}
+h1 a{
+    text-decoration: none;
+    color: #333;
 }
 li{
     margin-top: 25px;
