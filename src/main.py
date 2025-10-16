@@ -16,11 +16,11 @@ import csv
 
 app = FastAPI()
 
-user_video_saving_dir = "data/users"
+user_video_saving_dir = "data/videos"
 os.makedirs(user_video_saving_dir, exist_ok=True)
 
 # file to store the video file name
-csv_file_path = "data/videos/videoName.csv"
+csv_file_path = "data/users/videoName.csv"
 os.makedirs(os.path.dirname(csv_file_path), exist_ok=True)
 
 # Ensure CSV file exists with header
@@ -46,7 +46,9 @@ async def indexPage(request:Request):
 async def uploadVideoPage(request:Request):
     return templates.TemplateResponse("uploadVideo.html",{"request":request})
 
-# route : /u/watch <- user can view the videos
+@app.get("/u/watch", response_class=HTMLResponse)
+async def uploadVideoPage(request:Request):
+    return templates.TemplateResponse("watchVideo.html",{"request":request})
 
 @app.post("/file/upload")
 async def storeVideo(videoFile : UploadFile = File(...)):
@@ -84,6 +86,19 @@ async def storeVideo(videoFile : UploadFile = File(...)):
     finally:
         videoFile.file.close()
 
+@app.get("/file/list")
+async def getVideoList():
+    video_list = []
+
+    try:
+        with open(csv_file_path, newline='') as csvfile:
+            reader = csv.DictReader(csvfile) 
+            for row in reader:
+                video_list.append(row)  
+    except FileNotFoundError:
+        return {"error": "CSV file not found"}
+
+    return {"videos": video_list}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=2025 , reload=True)
