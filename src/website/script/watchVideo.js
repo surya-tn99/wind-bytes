@@ -7,7 +7,7 @@ async function fetch_list(){
         const ul = document.getElementById("video-list");
         data.videos.forEach(element => {
             const li = document.createElement("li"); 
-            li.innerHTML = `<a href='/file/${element.id}'>${element.filename}</a>`;
+            li.innerHTML = `<a href='/source/${element.id}'>${element.filename}</a>`;
             ul.append(li);
         });
     }
