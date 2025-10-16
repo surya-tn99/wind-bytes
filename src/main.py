@@ -31,7 +31,12 @@ if not os.path.exists(csv_file_path):
 
 
 templates = Jinja2Templates(directory = "website")
+# css
+app.mount("/style", StaticFiles(directory="website/style"), name="style")
 app.mount("/u/style", StaticFiles(directory="website/style"), name="style")
+# js
+app.mount("/script", StaticFiles(directory="website/script"), name="script")
+app.mount("/u/script", StaticFiles(directory="website/script"), name="script")
 
 @app.get("/", response_class=HTMLResponse)
 async def indexPage(request:Request):
