@@ -3,8 +3,8 @@ import os
 import shutil
 
 # fastAPI
-from fastapi import FastAPI, File, UploadFile, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, File, UploadFile, Request ,Header
+from fastapi.responses import HTMLResponse , StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import uvicorn
@@ -29,6 +29,10 @@ if not os.path.exists(csv_file_path):
         writer = csv.writer(f)
         writer.writerow(["id", "filename"]) 
 
+# chunk
+KB = 1024
+MB = 1024 * KB
+CHUNK_SIZE = 1 * MB 
 
 templates = Jinja2Templates(directory = "website")
 # css
@@ -42,6 +46,7 @@ app.mount("/u/script", StaticFiles(directory="website/script"), name="script")
 async def indexPage(request:Request):
     return templates.TemplateResponse("index.html",{"request":request})
 
+# user interaction page hosting
 @app.get("/u/upload", response_class=HTMLResponse)
 async def uploadVideoPage(request:Request):
     return templates.TemplateResponse("uploadVideo.html",{"request":request})
@@ -50,6 +55,15 @@ async def uploadVideoPage(request:Request):
 async def uploadVideoPage(request:Request):
     return templates.TemplateResponse("watchVideo.html",{"request":request})
 
+# host the player page
+@app.get("/source/{videoId}")
+async def videoPlayerPage(request: Request , videoId:str):
+    return templates.TemplateResponse("videoPlayer.html",{
+        "request":request,
+        "videoId":videoId
+    })
+
+# backend related routes
 @app.post("/file/upload")
 async def storeVideo(videoFile : UploadFile = File(...)):
 
@@ -86,6 +100,7 @@ async def storeVideo(videoFile : UploadFile = File(...)):
     finally:
         videoFile.file.close()
 
+# return the dict of available videos
 @app.get("/file/list")
 async def getVideoList():
     video_list = []
@@ -100,5 +115,64 @@ async def getVideoList():
 
     return {"videos": video_list}
 
+# streaming video
+@app.get("/stream/{videoId}")
+async def streamVideo(videoId:str , range:str = Header(None)):
+
+    video_path = os.path.join(user_video_saving_dir, videoId)
+    if not os.path.isfile(video_path):
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    file_size = os.path.getsize(video_path)
+    start = 0
+    end = file_size - 1
+    status_code = 200
+
+    if range is not None:
+        range_value = range.strip().replace("bytes=","")
+        start_str,end_str = range_value.split("-") if "-" in range_value else (range_value,"")
+
+        # str to int conversion
+        start = int(start_str) if start_str else 0
+        if end_str:
+            end = int(end_str)
+        else:
+            end = min(start+CHUNK_SIZE-1, file_size-1)
+        
+        status_code = 206
+
+    content_length = (end - start) + 1
+
+    chunk_size = 8 * KB # repeated send 16KB to client
+
+    def file_iterator(path , offset , bytes_to_read):
+        with open(path , "rb") as file:
+            file.seek(offset)
+            while bytes_to_read > 0 :
+                chunk = file.read(min(chunk_size , bytes_to_read))
+                if not chunk:
+                    break
+                bytes_to_read -= len(chunk)
+                yield chunk
+
+    headers = {
+        "Content-Range": f"bytes {start}-{end}/{file_size}",
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(content_length),
+        "Content-Type": "video/mp4",
+    }
+
+    return StreamingResponse(
+        file_iterator(video_path , start , content_length),
+        status_code = status_code,
+        headers = headers
+    )
+
+
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=2025 , reload=True)
+    uvicorn.run("main:app", port=2025 , reload=True , host="0.0.0.0")
+
+
+# 200 - full content
+# 206 - partial content
+# 404 - not found
