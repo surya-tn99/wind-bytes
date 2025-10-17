@@ -2,7 +2,6 @@ async function fetch_list(){
     try{
         const response = await fetch("/file/list");
         const data = await response.json();
-        console.log(data);
         
         const ul = document.getElementById("video-list");
         data.videos.forEach(element => {
