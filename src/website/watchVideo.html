@@ -2,16 +2,22 @@
 <html lang="en">
 <head>
     <title>Wind Bytes</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style/watchVideo.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <h1><a href="/">Wind🌩️Bytes</a></h1>
     <div class="container">
         <h2>🎥 Videos</h2>
         <ul id="video-list">
+            {% for element in videos %}
+                <li>
+                    <a href="/source/{{ element.id }}">{{ element.filename }}</a>
+                </li>
+            {% else %}
+                <li>No videos available</li>
+            {% endfor %}
         </ul>
     </div>
-    <script src="script/watchVideo.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@ import os
 import shutil
 
 # fastAPI
-from fastapi import FastAPI, File, UploadFile, Request ,Header
+from fastapi import FastAPI, File, UploadFile, Request ,Header, HTTPException
 from fastapi.responses import HTMLResponse , StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -52,8 +52,25 @@ async def uploadVideoPage(request:Request):
     return templates.TemplateResponse("uploadVideo.html",{"request":request})
 
 @app.get("/u/watch", response_class=HTMLResponse)
-async def uploadVideoPage(request:Request):
-    return templates.TemplateResponse("watchVideo.html",{"request":request})
+async def watchVideoPage(request: Request):
+    video_list = []
+
+    # Read videos from CSV
+    try:
+        with open(csv_file_path, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                video_list.append(row)
+    except FileNotFoundError:
+        video_list = []
+
+    return templates.TemplateResponse(
+        "watchVideo.html",
+        {
+            "request": request,
+            "videos": video_list  # Pass the video list to Jinja
+        }
+    )
 
 # host the player page
 @app.get("/source/{videoId}")
@@ -100,21 +117,6 @@ async def storeVideo(videoFile : UploadFile = File(...)):
     finally:
         videoFile.file.close()
 
-# return the dict of available videos
-@app.get("/file/list")
-async def getVideoList():
-    video_list = []
-
-    try:
-        with open(csv_file_path, newline='') as csvfile:
-            reader = csv.DictReader(csvfile) 
-            for row in reader:
-                video_list.append(row)  
-    except FileNotFoundError:
-        return {"error": "CSV file not found"}
-
-    return {"videos": video_list}
-
 # streaming video
 @app.get("/stream/{videoId}")
 async def streamVideo(videoId:str , range:str = Header(None)):
@@ -129,22 +131,17 @@ async def streamVideo(videoId:str , range:str = Header(None)):
     status_code = 200
 
     if range is not None:
-        range_value = range.strip().replace("bytes=","")
-        start_str,end_str = range_value.split("-") if "-" in range_value else (range_value,"")
-
-        # str to int conversion
-        start = int(start_str) if start_str else 0
-        if end_str:
-            end = int(end_str)
-        else:
-            end = min(start+CHUNK_SIZE-1, file_size-1)
-        
+        range_value = range.strip().replace("bytes=", "")
+        start_str, end_str = range_value.split("-") if "-" in range_value else (range_value, "")
+        start = int(start_str)
+        end = int(end_str) if end_str else file_size - 1  # don’t enforce CHUNK_SIZE
         status_code = 206
+
 
     content_length = (end - start) + 1
 
-    chunk_size = 8 * KB # repeated send 16KB to client
-
+    # chunk_size = 4 * KB # repeated send 16KB to client
+    chunk_size = 64 * KB
     def file_iterator(path , offset , bytes_to_read):
         with open(path , "rb") as file:
             file.seek(offset)
@@ -159,7 +156,7 @@ async def streamVideo(videoId:str , range:str = Header(None)):
         "Content-Range": f"bytes {start}-{end}/{file_size}",
         "Accept-Ranges": "bytes",
         "Content-Length": str(content_length),
-        "Content-Type": "video/mp4",
+        "Content-Type":  "video/mp4",
     }
 
     return StreamingResponse(
@@ -176,3 +173,5 @@ if __name__ == "__main__":
 # 200 - full content
 # 206 - partial content
 # 404 - not found
+
+
