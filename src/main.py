@@ -134,19 +134,17 @@ async def streamVideo(videoId:str , range:str = Header(None)):
         range_value = range.strip().replace("bytes=", "")
         start_str, end_str = range_value.split("-") if "-" in range_value else (range_value, "")
         start = int(start_str)
-        end = int(end_str) if end_str else file_size - 1  # don’t enforce CHUNK_SIZE
+        end = int(end_str) if end_str else file_size - 1  
         status_code = 206
 
 
     content_length = (end - start) + 1
 
-    # chunk_size = 4 * KB # repeated send 16KB to client
-    chunk_size = 64 * KB
     def file_iterator(path , offset , bytes_to_read):
         with open(path , "rb") as file:
             file.seek(offset)
             while bytes_to_read > 0 :
-                chunk = file.read(min(chunk_size , bytes_to_read))
+                chunk = file.read(min(CHUNK_SIZE , bytes_to_read))
                 if not chunk:
                     break
                 bytes_to_read -= len(chunk)
