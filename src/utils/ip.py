@@ -68,6 +68,7 @@ def encode_ip_port(ip: str, port: int):
 
 
 def decode_ip_port(code: str):
+    code = code.strip()
     num = 0
     for c in code:
         num = num * 36 + chars.index(c)
@@ -84,6 +85,6 @@ def decode_ip_port(code: str):
     return ip, port , f'{ip}:{port}'
 
 
-def buildup_url_from_ip_addr(ip_addr:str):
-    url = "http://"+ip_addr
+def buildup_url_from_ip_addr(ip_addr_port:str):
+    url = "http://"+ip_addr_port
     return url

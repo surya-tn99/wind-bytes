@@ -1,6 +1,4 @@
-import socketio , asyncio , ip , uvicorn
-
-from fastapi import FastAPI
+import socketio ,ip
 
 servers = {}
 
@@ -20,6 +18,7 @@ async def create_connection(ip_addr):
     @sio.event
     async def connect():
         print(f"{name} connected - {ip_addr}")
+        await sio.emit("rcv_client_msg" , {"message" : "message from CLIENT"})
 
     @sio.event
     async def disconnect():
@@ -30,10 +29,12 @@ async def create_connection(ip_addr):
         print(f"response from {name} - {ip_addr}")
         print("response is " + data["message"])
 
-    await sio.connect(url)
+    try:
+        await sio.connect(url)
+    except Exception as e:
+        print(f"failed to connect\n {name} - {ip_addr}\nReason :  {e}")
+        return
     
-    await sio.emit("rcv_client_msg" , "message from client bro ")
-
     servers[name] = sio
 
 async def disconnect_all():
@@ -42,40 +43,3 @@ async def disconnect_all():
         if sio.connected:
             await sio.disconnect()
             print(f"[{name}] Connection closed.")
-
-
-app = FastAPI()
-
-@app.get("/add/{ip_addr}")
-async def add_con(ip_addr: str):
-    decoded = ip.decode_ip_port(ip_addr)
-    url = decoded[2]
-
-    print(f"\n\n\t {ip_addr} : {url}\n\n")
-    
-    await create_connection(url)
-    
-    return {"connected_servers": list(servers.keys())}
-
-@app.get("/exit")
-async def end_conn():
-    await disconnect_all()
-    return {"status": "all disconnected"}
-
-
-def run_socket_client():
-
-    port = ip.get_port_number()
-
-    if not port[0]:
-        print("All port are already binded from range 1100 to 9999")
-        return
-    
-    uvicorn.run('socketClient:app' 
-                , host=ip.get_ip_addr() 
-                , port = port[1]
-                )
-
-if __name__ == '__main__':
-    run_socket_client()
-

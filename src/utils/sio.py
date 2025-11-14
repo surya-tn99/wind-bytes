@@ -3,14 +3,20 @@ from fastapi import FastAPI
 import uvicorn
 import ip  
 import socketClient  
-import socketServer
+from socketServer import api , app
 
-api = FastAPI()
-
-api.mount("/" ,socketServer.app)
-
-# Ensure thread-safe access to servers dict
 servers_lock = asyncio.Lock()
+
+
+ip_addr = ip.get_ip_addr()
+port_info = ip.get_port_number()
+
+if not port_info[0]:
+    print("All ports are already binded from range 1100 to 9999")
+    exit(404)
+
+port_number = port_info[1]
+
 
 @api.get("/add/{ip_addr}")
 async def add_con(ip_addr: str):
@@ -33,20 +39,17 @@ async def end_conn():
     return {"status": "all disconnected"}
 
 
-def run_api():
-    ip_addr = ip.get_ip_addr()
-    port_info = ip.get_port_number()  # should return (bool, port_number)
+@api.get("/host")
+def show_host_ip():
+    return {"ip": ip_addr , "port":port_number , "code":ip.encode_ip_port(ip_addr , port_number)} 
 
-    if not port_info[0]:
-        print("All ports are already binded from range 1100 to 9999")
-        return
+def run_app():
 
-    port_number = port_info[1]
     encoded = ip.encode_ip_port(ip_addr, port_number)
     print(f"\n\tIP : {ip_addr} \n\tPORT : {port_number} \n\tCODE : {encoded}\n")
 
-    uvicorn.run("sio:api", host=ip_addr, port=port_number , reload=True)
+    uvicorn.run("socketServer:app", host=ip_addr, port=port_number)
 
 
 if __name__ == "__main__":
-    run_api()
+    run_app()
