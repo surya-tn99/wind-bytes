@@ -1,9 +1,12 @@
 import asyncio
-from fastapi import FastAPI
 import uvicorn
-import ip  
-import socketClient  
-from socketServer import api , app
+from utils import ip , socketClient
+from utils.socketServer import wrap_fastapi_socketServer
+from fastapi import FastAPI
+
+api = FastAPI()
+
+app = wrap_fastapi_socketServer(api)
 
 servers_lock = asyncio.Lock()
 
@@ -48,7 +51,7 @@ def run_app():
     encoded = ip.encode_ip_port(ip_addr, port_number)
     print(f"\n\tIP : {ip_addr} \n\tPORT : {port_number} \n\tCODE : {encoded}\n")
 
-    uvicorn.run("socketServer:app", host=ip_addr, port=port_number)
+    uvicorn.run("sio:app", host=ip_addr, port=port_number)
 
 
 if __name__ == "__main__":

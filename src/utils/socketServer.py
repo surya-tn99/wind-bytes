@@ -2,8 +2,11 @@ import socketio
 from fastapi import FastAPI
 
 sio = socketio.AsyncServer(async_mode = "asgi" , cors_allowed_origins='*')
-api = FastAPI()
-app = socketio.ASGIApp(sio, other_asgi_app=api)
+# api = FastAPI()
+# app = socketio.ASGIApp(sio, other_asgi_app=api)
+
+def wrap_fastapi_socketServer(fastapi):
+    return socketio.ASGIApp(sio ,other_asgi_app=fastapi )
 
 @sio.event
 async def connect(sid , environ):
