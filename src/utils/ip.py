@@ -14,7 +14,7 @@ def get_ip_addr():
     return ip
 
 
-def is_port_available(port, host):
+def is_port_available(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
             s.bind((host, port))
@@ -22,6 +22,16 @@ def is_port_available(port, host):
         
         except OSError:
             return False
+
+def get_port_number():
+    ip_addr = get_ip_addr()
+    
+    for port in range(1100 , 9999+1):
+        if is_port_available(ip_addr , port):
+            return [True , port]
+    
+    return [False]
+
 
 # 0-9 & A-Z
 chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -71,4 +81,9 @@ def decode_ip_port(code: str):
     ip_num = num >> 16
     # 0xFF = 255
     ip = '.'.join(str((ip_num >> shift) & 0xFF) for shift in (24, 16, 8, 0))
-    return ip, port
+    return ip, port , f'{ip}:{port}'
+
+
+def buildup_url_from_ip_addr(ip_addr:str):
+    url = "http://"+ip_addr
+    return url
