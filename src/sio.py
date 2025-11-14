@@ -1,10 +1,13 @@
 import asyncio
 import uvicorn
 from utils import ip , socketClient
+from utils.API import api
 from utils.socketServer import wrap_fastapi_socketServer
-from fastapi import FastAPI
 
-api = FastAPI()
+from fastapi import Request 
+from fastapi.templating import Jinja2Templates 
+from fastapi.responses import HTMLResponse , JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 app = wrap_fastapi_socketServer(api)
 
@@ -19,37 +22,61 @@ if not port_info[0]:
     exit(404)
 
 port_number = port_info[1]
+host_encoded_code = ip.encode_ip_port(ip_addr, port_number)
 
 
-@api.get("/add/{ip_addr}")
-async def add_con(ip_addr: str):
-    decoded = ip.decode_ip_port(ip_addr)
-    url = decoded[2] 
+templates = Jinja2Templates(directory = "website")
+# css
+api.mount("/style", StaticFiles(directory="website/style"), name="style")
+api.mount("/u/style", StaticFiles(directory="website/style"), name="style")
+# js
+api.mount("/script", StaticFiles(directory="website/script"), name="script")
+api.mount("/u/script", StaticFiles(directory="website/script"), name="script")
+# assert
+api.mount("/assert", StaticFiles(directory="website/assert"), name="assert")
+api.mount("/u/assert", StaticFiles(directory="website/assert"), name="assert")
 
-    print(f"\n\n\tAdding connection to {ip_addr} : {url}\n\n")
+
+@api.get("/", response_class=HTMLResponse)
+def indexPage(request:Request):
+    return templates.TemplateResponse("index.html"
+            , 
+            {
+                "request":request,
+                "host_code":host_encoded_code
+            } 
+    )
+
+@api.get("/peer/connect/{peer_code}" , response_class=JSONResponse)
+async def connect_peer(peer_code: str):
+
+    #----------------
+    #   TODO:
+    #    check whether the peer_code is not same as host_code
+    #---------------- 
 
     async with servers_lock:
-        await socketClient.create_connection(url)
-        connected = list(socketClient.servers.keys())
+        connection_flag , connetion_status= await socketClient.create_connection(peer_code ,host_encoded_code)
 
-    return {"connected_servers": connected}
+    return JSONResponse({"is_connection_success": connection_flag 
+                         ,"status":connetion_status
+                         })
 
 
-@api.get("/exit")
+@api.get("/exit" , response_class=JSONResponse)
 async def end_conn():
     async with servers_lock:
         await socketClient.disconnect_all()
-    return {"status": "all disconnected"}
+    return JSONResponse({"status": "all disconnected"})
 
 
-@api.get("/host")
+@api.get("/host_ip", response_class=JSONResponse)
 def show_host_ip():
     return {"ip": ip_addr , "port":port_number , "code":ip.encode_ip_port(ip_addr , port_number)} 
 
 def run_app():
 
-    encoded = ip.encode_ip_port(ip_addr, port_number)
-    print(f"\n\tIP : {ip_addr} \n\tPORT : {port_number} \n\tCODE : {encoded}\n")
+    print(f"\n\tIP : {ip_addr} \n\tPORT : {port_number} \n\tCODE : {host_encoded_code}\n")
 
     uvicorn.run("sio:app", host=ip_addr, port=port_number)
 

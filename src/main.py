@@ -51,6 +51,11 @@ async def indexPage(request:Request):
 async def uploadVideoPage(request:Request):
     return templates.TemplateResponse("uploadVideo.html",{"request":request})
 
+# user interaction page hosting
+@app.get("/u/peer", response_class=HTMLResponse)
+async def PeerServerPage(request:Request):
+    return templates.TemplateResponse("peer.html",{"request":request})
+
 @app.get("/u/watch", response_class=HTMLResponse)
 async def watchVideoPage(request: Request):
     video_list = []

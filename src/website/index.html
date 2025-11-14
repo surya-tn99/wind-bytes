@@ -4,16 +4,56 @@
     <title>Wind Bytes</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style/index.css">
+    <link rel="shortcut icon" href="assert/favicon.ico" type="image/x-icon">
 </head>
 <body>
     <h1>Wind🌩️Bytes</h1>
-    <div class="container">
-        <ul>
-            <li><a href="/u/upload">📤 Upload Video    </a></li>
-            <li><a href="/u/watch">📺 Watch Video     </a></li>
-        </ul>
+    
+    <div>
+        <form onsubmit="connect_peer(event)">
+            <p><b>PEER CODE</b></p>
+            
+            <input type="text" name="peer_code" required>
+            
+            <button type="submit"><b>CONNECT PEER</b></button>
+        </form>
+        <p><b>STATUS : <span>NIL</span></b></p>
     </div>
-    <p>⚙️ An P2P based Video Streming Application ⚙️</p>
+
+    <hr>
+    <p><b>
+        <!-- HOST CODE : <br><br> -->
+        <h3>{{host_code}}</h3>     
+    </b></p>
+
+    <button><b>END ALL CONNECTIONS</b></button>
+    <hr>
+
+
+    <div id="chat-div">
+        <!-- <div data-peer-code="40A9M13YK">
+
+            <form onsubmit="send_msg(event)">
+                <p><b>PEER CODE : <span class="peer_code">40A9M13YK</span></b></p>
+                
+                <input type="text" name="peer_msg" required="">
+                
+                <button type="submit"><b>SEND</b></button>
+            </form>
+            
+            <ul>                
+            </ul> 
+                <li class="host">
+                    CONNECT REQUEST TO PEER 40A9M13YK
+                </li>
+            <hr>  
+        </div>
+         -->
+    </div>
+
+    <script src="script/index.js"></script>
 
 </body>
 </html>
+
+
